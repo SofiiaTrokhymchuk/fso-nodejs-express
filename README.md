@@ -1,6 +1,6 @@
 # Phonebook App
 
-This is a simple full-stack application built with Node.js and React, allowing users to manage a list of contacts in a phonebook.
+This is a simple full-stack application built with Node.js and React, allowing users to manage a list of contacts in a phonebook. This app is a 3rd part of [fullstackopen](https://fullstackopen.com/en) course.
 
 ## Features
 
@@ -45,7 +45,7 @@ Before running the app, ensure you have the following installed:
    npm start
    ```
 
-2. The React app is built and minified. The production-ready files are located in the `dist` folder.
+2. The React app is built and minified. The production-ready files are located in the `dist` folder. The React app source code can be found [here](https://github.com/SofiiaTrokhymchuk/fullstackopen/tree/main/part2/phonebook).
 
 ### Deployment on Fly.io
 
