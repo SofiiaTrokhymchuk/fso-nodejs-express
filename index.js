@@ -1,5 +1,6 @@
-const fs = require('fs');
-let persons = JSON.parse(fs.readFileSync('./persons.json', 'utf8'));
+require('dotenv').config();
+
+const Person = require('./models/person');
 
 const express = require('express');
 const app = express();
@@ -22,66 +23,106 @@ app.use(
 );
 app.use(cors());
 
-function updatePersonsJson(persons) {
-  fs.writeFile('./persons.json', JSON.stringify(persons), 'utf8', (error) => {
-    if (error) {
-      console.error(error);
-    }
-  });
-}
-
-app.get('/api/info', (req, res) => {
-  const pageContent = `
-    <p>Phonebook has info for ${persons.length} people</p>
+app.get('/api/info', (req, res, next) => {
+  Person.countDocuments({})
+    .then((data) => {
+      const pageContent = `
+    <p>Phonebook has info for ${data} people</p>
     <p>${new Date()}</p>
     `;
-
-  res.send(pageContent);
+      res.send(pageContent);
+    })
+    .catch((err) => next(err));
 });
 
-app.get('/api/persons', (req, res) => {
-  res.json(persons);
+app.get('/api/persons', (req, res, next) => {
+  Person.find({})
+    .then((data) => res.json(data))
+    .catch((err) => next(err));
 });
 
-app.get('/api/persons/:id', (req, res) => {
+app.get('/api/persons/:id', (req, res, next) => {
   const { id } = req.params;
-  const person = persons.find((p) => p.id === Number(id));
 
-  person ? res.json(person) : res.status(404).send('Person not found');
+  Person.findById(id)
+    .then((data) => {
+      if (data) {
+        res.json(data);
+      } else {
+        const error = new Error();
+        error.name = 'NotFoundError';
+        throw error;
+      }
+    })
+    .catch((err) => next(err));
 });
 
-app.delete('/api/persons/:id', (req, res) => {
+app.delete('/api/persons/:id', (req, res, next) => {
   const { id } = req.params;
-  persons = persons.filter((p) => p.id !== Number(id));
-  updatePersonsJson(persons);
 
-  res.status(204).end();
+  Person.findByIdAndDelete(id)
+    .then((data) => {
+      if (data) {
+        res.status(204).end();
+      } else {
+        const error = new Error();
+        error.name = 'NotFoundError';
+        throw error;
+      }
+    })
+    .catch((err) => next(err));
 });
 
-app.post('/api/persons/', (req, res) => {
+app.post('/api/persons/', (req, res, next) => {
   const { name, number } = req.body;
-
-  if (!name || !number) {
-    return res.status(400).json({ error: 'name or number is missing' });
-  }
-
-  if (persons.find((p) => p.name === name)) {
-    return res.status(400).json({ error: 'name must be unique' });
-  }
-
-  const id = Math.round(Math.random() * 1000);
-  const person = {
-    id,
+  const person = new Person({
     name,
     number,
+  });
+
+  person
+    .save()
+    .then((data) => res.json(data))
+    .catch((err) => next(err));
+});
+
+app.put('/api/persons/:id', (req, res, next) => {
+  const { name, number } = req.body;
+  const { id } = req.params;
+  const updatedPerson = { name, number };
+
+  Person.findByIdAndUpdate(id, updatedPerson, {
+    new: true,
+    runValidators: true,
+    context: 'query',
+  })
+    .then((data) => {
+      if (data) {
+        res.json(data);
+      } else {
+        const error = new Error();
+        error.name = 'NotFoundError';
+        throw error;
+      }
+    })
+    .catch((err) => next(err));
+});
+
+app.use((req, res) => res.status(404).json({ error: 'Unknown path' }));
+
+app.use((err, req, res) => {
+  console.error(err);
+  const errors = {
+    CastError: { status: 400, message: 'Invalid object ID' },
+    ValidationError: { status: 403, message: err.message },
+    NotFoundError: { status: 404, message: 'Person not found' },
   };
 
-  persons = persons.concat(person);
-  updatePersonsJson(persons);
-
-  res.json(person);
+  res
+    .status(errors[err.name]?.status || 500)
+    .json({ error: errors[err.name]?.message || err.message });
 });
 
 app.listen(PORT, () =>
-  console.log(`Server started on port ${PORT}`, new Date())
+  console.info(`Server started on port ${PORT}`, new Date())
 );

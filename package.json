@@ -5,11 +5,12 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js --ignore persons.json",
+    "dev": "nodemon index.js",
     "build:ui": "@powershell Remove-Item -Recurse -Force dist && cd ..\\fullstackopen\\part2\\phonebook && npm run build && @powershell Copy-Item dist -Recurse ..\\..\\..\\fso-nodejs-express",
     "deploy": "fly deploy",
     "deploy:full": "npm run build:ui && npm run deploy",
     "logs:prod": "fly logs",
+    "lint": "eslint .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -29,12 +30,14 @@
   "homepage": "https://github.com/SofiiaTrokhymchuk/fso-nodejs-express#readme",
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "mongoose": "^8.0.1",
     "morgan": "^1.10.0",
     "nodemon": "^3.0.1"
   },
   "devDependencies": {
-    "@flydotio/dockerfile": "^0.4.10"
+    "@flydotio/dockerfile": "^0.4.10",
+    "eslint": "^8.54.0"
   }
 }
